@@ -30,18 +30,87 @@ func main() {
 func homeHandler(w http.ResponseWriter, r *http.Request) {
 	tmpl, _ := template.New("home").Parse(`
 	<!DOCTYPE html>
-	<html>
+	<html lang="it">
 	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
 		<title>Gioco del Numero</title>
+		<style>
+			body {
+				font-family: 'Arial', sans-serif;
+				background: url('https://www.w3schools.com/w3images/forest.jpg') no-repeat center center fixed;
+				background-size: cover;
+				color: white;
+				display: flex;
+				justify-content: center;
+				align-items: center;
+				height: 100vh;
+				margin: 0;
+				font-size: 1.2em;
+			}
+			.container {
+				text-align: center;
+				background-color: rgba(0, 0, 0, 0.6);
+				padding: 30px;
+				border-radius: 10px;
+				width: 100%;
+				max-width: 450px;
+			}
+			h1 {
+				font-size: 2.5em;
+				color: #ffeb3b;
+			}
+			form {
+				margin-top: 20px;
+			}
+			input[type="number"] {
+				padding: 12px;
+				font-size: 1.5em;
+				width: 80%;
+				border: 1px solid #fff;
+				border-radius: 8px;
+				margin-top: 10px;
+			}
+			button {
+				padding: 12px 20px;
+				font-size: 1.2em;
+				border: none;
+				border-radius: 8px;
+				background-color: #4CAF50;
+				color: white;
+				cursor: pointer;
+				margin-top: 15px;
+			}
+			button:hover {
+				background-color: #45a049;
+			}
+			a {
+				display: inline-block;
+				margin-top: 20px;
+				color: #ffeb3b;
+				text-decoration: none;
+				font-size: 1.2em;
+			}
+			a:hover {
+				text-decoration: underline;
+			}
+		</style>
+		<script>
+			function playSound(file) {
+				var audio = new Audio(file);
+				audio.play();
+			}
+		</script>
 	</head>
 	<body>
-		<h1>Indovina il Numero!</h1>
-		<p>Prova a indovinare il numero tra 0 e 99.</p>
-		<form action="/tentativo" method="post">
-			<label for="tentativo">Inserisci un numero:</label>
-			<input type="number" id="tentativo" name="tentativo" required>
-			<button type="submit">Invia</button>
-		</form>
+		<div class="container">
+			<h1>Indovina il Numero!</h1>
+			<p>Prova a indovinare il numero tra 0 e 99.</p>
+			<form action="/tentativo" method="post">
+				<input type="number" id="tentativo" name="tentativo" required>
+				<button type="submit" onclick="playSound('click-sound.mp3')">Invia</button>
+			</form>
+		</div>
 	</body>
 	</html>
 	`)
@@ -60,12 +129,16 @@ func tentativoHandler(w http.ResponseWriter, r *http.Request) {
 	count++
 
 	var messaggio string
+	var soundFile string
 	if tentativo < numeroGenerato {
 		messaggio = "Troppo basso! Riprova!"
+		soundFile = "error-sound.mp3"
 	} else if tentativo > numeroGenerato {
 		messaggio = "Troppo alto! Riprova!"
+		soundFile = "error-sound.mp3"
 	} else {
 		messaggio = fmt.Sprintf("Hai indovinato in %d tentativi!", count)
+		soundFile = "success-sound.mp3"
 		numeroGenerato = rand.Intn(100) // Nuovo numero generato per una nuova partita
 		count = 0                       // Resetta il contatore dei tentativi
 	}
@@ -73,16 +146,69 @@ func tentativoHandler(w http.ResponseWriter, r *http.Request) {
 	// Risposta al cliente con il risultato
 	tmpl, _ := template.New("result").Parse(`
 	<!DOCTYPE html>
-	<html>
+	<html lang="it">
 	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
 		<title>Gioco del Numero</title>
+		<style>
+			body {
+				font-family: 'Arial', sans-serif;
+				background: url('https://www.w3schools.com/w3images/forest.jpg') no-repeat center center fixed;
+				background-size: cover;
+				color: white;
+				display: flex;
+				justify-content: center;
+				align-items: center;
+				height: 100vh;
+				margin: 0;
+				font-size: 1.2em;
+			}
+			.container {
+				text-align: center;
+				background-color: rgba(0, 0, 0, 0.6);
+				padding: 30px;
+				border-radius: 10px;
+				width: 100%;
+				max-width: 450px;
+			}
+			h1 {
+				font-size: 2.5em;
+				color: #ffeb3b;
+			}
+			p {
+				font-size: 1.3em;
+				margin-top: 20px;
+			}
+			a {
+				display: inline-block;
+				margin-top: 20px;
+				color: #ffeb3b;
+				text-decoration: none;
+				font-size: 1.2em;
+			}
+			a:hover {
+				text-decoration: underline;
+			}
+		</style>
+		<script>
+			function playSound(file) {
+				var audio = new Audio(file);
+				audio.play();
+			}
+		</script>
 	</head>
-	<body>
-		<h1>Gioco del Numero</h1>
-		<p>{{.}}</p>
-		<a href="/">Prova un altro numero!</a>
+	<body onload="playSound('{{.SoundFile}}')">
+		<div class="container">
+			<h1>Gioco del Numero</h1>
+			<p>{{.Message}}</p>
+			<a href="/">Prova un altro numero!</a>
+		</div>
 	</body>
 	</html>
 	`)
-	tmpl.Execute(w, messaggio)
+	tmpl.Execute(w, map[string]interface{}{
+		"Message":   messaggio,
+		"SoundFile": soundFile,
+	})
 }
